@@ -13,9 +13,6 @@ export default function Home() {
   const [selectedReviewer, setSelectedReviewer] = useState<ReviewerData | null>(null);
   const [savedReviewers, setSavedReviewers] = useState<ReviewerData[]>(SAMPLE_REVIEWERS);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [userQuote, setUserQuote] = useState<string>(
-    'phrases or quotes unique one from me but try to make placeholder sample'
-  );
 
   useEffect(() => {
     const root = document.documentElement;
@@ -41,8 +38,6 @@ export default function Home() {
     setSelectedReviewer(null);
   };
 
-  const isStudyingOrQuiz = activeTab === 'studio' && selectedReviewer !== null;
-
   return (
     <div className="bg-white dark:bg-zinc-950 text-black dark:text-zinc-100 min-h-screen flex flex-col font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors">
       {/* Top Navbar */}
@@ -51,11 +46,8 @@ export default function Home() {
         setActiveTab={(tab) => {
           setActiveTab(tab);
         }}
-        userQuote={userQuote}
-        setUserQuote={setUserQuote}
         theme={theme}
         toggleTheme={toggleTheme}
-        isFocusedMode={isStudyingOrQuiz}
       />
 
       {/* Main Workspace Area - full width, clean, uncluttered reading & quiz view */}
