@@ -118,7 +118,7 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
   let globalQuestionCounter = 0;
 
   return (
-    <div className="font-sans text-sm text-black dark:text-zinc-100 max-w-3xl space-y-6">
+    <div className="font-sans text-base text-black dark:text-zinc-100 max-w-3xl space-y-6">
       {/* Top Header Bar & Explicit Part Anchors */}
       <div className="sticky top-0 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800 pb-3 pt-1 z-10 space-y-2">
         <div className="flex flex-wrap items-center justify-between text-xs gap-2">
@@ -173,7 +173,7 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
         {hasMcqQuestions && (
           <section id="sec-part-mcq" className="space-y-5 scroll-mt-24">
             <div className="mt-10 flex items-center justify-between">
-              <h2 className="font-semibold text-base text-zinc-900 dark:text-zinc-100 tracking-tight">
+              <h2 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Part I: Multiple Choice Questions
               </h2>
             </div>
@@ -243,7 +243,7 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
         {hasIdentQuestions && (
           <section id="sec-part-ident" className="space-y-5 scroll-mt-24 pt-2">
             <div className="mt-10 flex items-center justify-between">
-              <h2 className="font-semibold text-base text-zinc-900 dark:text-zinc-100 tracking-tight">
+              <h2 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100 tracking-tight">
                 Part II: Identification Questions
               </h2>
             </div>
@@ -310,7 +310,7 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
                           }
                         }}
                         placeholder=" "
-                        className={`border-b bg-transparent px-1 py-0.5 text-xs focus:outline-none w-48 transition-colors ${inputTextClass}`}
+                        className={`border-b bg-transparent px-1 py-0.5 text-base focus:outline-none w-56 transition-colors ${inputTextClass}`}
                       />
                     </div>
                   </div>

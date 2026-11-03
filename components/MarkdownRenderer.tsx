@@ -315,15 +315,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     const getHeadingClass = (level: number) => {
       switch (level) {
         case 1:
-          return 'text-xl font-bold text-black dark:text-white tracking-tight border-b border-zinc-200 dark:border-zinc-800 pb-2 mt-6';
+          return 'text-2xl font-bold text-black dark:text-white tracking-tight border-b border-zinc-200 dark:border-zinc-800 pb-2 mt-6';
         case 2:
-          return 'text-lg font-bold text-black dark:text-white tracking-tight mt-5 pb-0.5';
+          return 'text-xl font-bold text-black dark:text-white tracking-tight mt-5 pb-0.5';
         case 3:
-          return 'text-base font-semibold text-zinc-900 dark:text-zinc-100 mt-4';
+          return 'text-lg font-semibold text-zinc-900 dark:text-zinc-100 mt-4';
         case 4:
-          return 'text-sm font-semibold text-zinc-800 dark:text-zinc-200 mt-3';
+          return 'text-base font-semibold text-zinc-800 dark:text-zinc-200 mt-3';
         default:
-          return 'text-xs font-semibold text-zinc-700 dark:text-zinc-300 mt-2';
+          return 'text-base font-medium text-zinc-700 dark:text-zinc-300 mt-2';
       }
     };
 
@@ -368,7 +368,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   };
 
   return (
-    <div className="font-sans text-sm text-black dark:text-zinc-100 space-y-5">
+    <div className="font-sans text-base text-black dark:text-zinc-100 space-y-5">
       <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800 text-xs">
         <span className="text-zinc-500 font-medium">Dynamic Document Tree Hierarchy</span>
         <div className="flex gap-3">

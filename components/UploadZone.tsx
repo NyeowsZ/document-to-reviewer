@@ -56,10 +56,9 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
               <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
                 Make Study Document
               </span>
-              <span className="text-[10px] font-mono uppercase text-zinc-400">Markdown</span>
             </div>
             <p className="text-xs text-zinc-500 mt-1">
-              Generates a clean 1:1 Markdown document supporting active recall blurring and section hierarchy collapsing.
+              Generates a structured study document supporting active recall blurring and section hierarchy collapsing.
             </p>
           </div>
 
@@ -75,7 +74,6 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
               <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
                 Make Questionnaire / Quiz
               </span>
-              <span className="text-[10px] font-mono uppercase text-zinc-400">JSON Engine</span>
             </div>
             <p className="text-xs text-zinc-500 mt-1">
               Generates a self-check quiz with Multiple Choice (bold/red feedback) and Identification question sets.
