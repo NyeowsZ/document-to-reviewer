@@ -200,7 +200,7 @@ export async function generateReviewerWithGemini({
       },
     ],
     generationConfig: {
-      temperature: 0.2,
+      temperature: 0.4,
     },
   };
 
