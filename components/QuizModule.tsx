@@ -86,7 +86,7 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
     const newShuffled: Record<string, MCQChoice[]> = {};
 
     mcqList.forEach((item) => {
-      if (item.type === 'mcq') {
+      if (item.type === 'mcq' && Array.isArray(item.choices)) {
         const choicesCopy = [...item.choices];
         for (let i = choicesCopy.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -192,7 +192,7 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
 
                 globalQuestionCounter++;
                 const questionNumber = globalQuestionCounter;
-                const choices = shuffledMcqChoices[item.id] || item.choices;
+                const choices = shuffledMcqChoices[item.id] || item.choices || [];
                 const selectedIdx = mcqAnswers[item.id];
 
                 return (

@@ -199,7 +199,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
         <div className="p-4 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center gap-3">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
           <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            Streaming directly to Google Gemini 2.0 Flash... Parsing document and generating{' '}
+            Streaming directly to Google Gemini 3.5 Flash Lite... Parsing document and generating{' '}
             {selectedType === 'document' ? 'Study Reviewer' : 'Questionnaire'}...
           </p>
         </div>
