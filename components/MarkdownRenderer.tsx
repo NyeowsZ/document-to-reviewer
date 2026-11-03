@@ -278,8 +278,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         let termPart: string | null = null;
         let descPart: string | null = null;
 
-        const matchInsideBold = item.text.match(/^(\*\*(?:\[\[.+?\]\]|.+?):\*\*)\s*(.*)/s);
-        const matchOutsideBold = item.text.match(/^(\*\*(?:\[\[.+?\]\]|.+?)\*\*):\s*(.*)/s);
+        const matchInsideBold = item.text.match(/^(\*\*(?:\[\[[\s\S]+?\]\]|[\s\S]+?):\*\*)\s*([\s\S]*)/);
+        const matchOutsideBold = item.text.match(/^(\*\*(?:\[\[[\s\S]+?\]\]|[\s\S]+?)\*\*):\s*([\s\S]*)/);
 
         if (matchInsideBold) {
           termPart = matchInsideBold[1];

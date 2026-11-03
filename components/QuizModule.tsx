@@ -192,7 +192,10 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
 
                 globalQuestionCounter++;
                 const questionNumber = globalQuestionCounter;
-                const choices = shuffledMcqChoices[item.id] || item.choices || [];
+                const choices =
+                  shuffledMcqChoices[item.id] ||
+                  (item.type === 'mcq' ? item.choices : []) ||
+                  [];
                 const selectedIdx = mcqAnswers[item.id];
 
                 return (
@@ -265,8 +268,9 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
                 const uInput = identInputs[item.id] || '';
                 const isFocused = identFocused[item.id];
                 const isChecked = identChecked[item.id] && !isFocused && uInput.trim().length > 0;
-                const isMatch = item.answers.some(
-                  (ans) => ans.toLowerCase() === uInput.trim().toLowerCase()
+                const identAnswers = item.type === 'identification' ? item.answers : [];
+                const isMatch = identAnswers.some(
+                  (ans: string) => ans.toLowerCase() === uInput.trim().toLowerCase()
                 );
 
                 let inputTextClass = 'text-zinc-900 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700';
