@@ -208,9 +208,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           const descPart = item.text.slice(colonIdx + 1);
 
           return (
-            <li key={i} className="flex items-start gap-2 leading-relaxed my-1">
-              <span className="shrink-0 font-semibold">{parseInline(termPart, true)}:</span>
-              <div className="flex-1 leading-relaxed">{parseInline(descPart, false)}</div>
+            <li key={i} className="leading-relaxed my-1">
+              <span className="font-semibold">{parseInline(termPart, true)}:</span>{' '}
+              <span className="leading-relaxed">{parseInline(descPart, false)}</span>
             </li>
           );
         }
