@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ReviewerData, ReviewerType } from '../types/reviewer';
 import { SAMPLE_REVIEWERS } from '../data/sampleReviewers';
 import { generateReviewerWithGemini } from '../utils/geminiClient';
@@ -9,10 +9,34 @@ interface UploadZoneProps {
   onSelectReviewer: (reviewer: ReviewerData) => void;
 }
 
+const DOCUMENT_MESSAGES = [
+  'Reading document chunks and stripping layout noise...',
+  'Extracting core conceptual hierarchy and headers...',
+  'Identifying key terminology, definitions, and active recall anchors...',
+  'Formulating structured active-recall study document...',
+  'Polishing markdown formatting and typography...',
+  'Finalizing reviewer document structure...',
+];
+
+const QUIZ_MESSAGES = [
+  'Parsing document content and key principles...',
+  'Extracting critical facts, terminologies, and definitions...',
+  'Synthesizing Multiple Choice Questions with plausible distractors...',
+  'Drafting Identification challenge questions and answer keys...',
+  'Checking question-to-answer semantic alignment...',
+  'Assembling interactive self-check questionnaire...',
+];
+
 export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
   const [selectedType, setSelectedType] = useState<ReviewerType>('document');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Multi-step progress animation state
+  const [progressPercent, setProgressPercent] = useState<number>(0);
+  const [currentMessageIndex, setCurrentMessageIndex] = useState<number>(0);
+  const [isDragOver, setIsDragOver] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // API Key management (client-side only, stored in localStorage)
   const [apiKey, setApiKey] = useState<string>('');
@@ -28,6 +52,48 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
     }
   }, []);
 
+  // Multi-step random progress bar and message cycle while processing
+  useEffect(() => {
+    if (!isProcessing) {
+      setProgressPercent(0);
+      setCurrentMessageIndex(0);
+      return;
+    }
+
+    setProgressPercent(12);
+    setCurrentMessageIndex(0);
+
+    const messageList = selectedType === 'document' ? DOCUMENT_MESSAGES : QUIZ_MESSAGES;
+
+    // Progress bar stepper with randomized increments
+    const progressTimer = setInterval(() => {
+      setProgressPercent((prev) => {
+        if (prev >= 92) return prev; // Hold at ~92% until complete
+        // Random incremental bump between 4% and 14%
+        const jump = Math.floor(Math.random() * 11) + 4;
+        return Math.min(prev + jump, 92);
+      });
+    }, 600 + Math.random() * 500);
+
+    // Random message rotation
+    let messageTimer: NodeJS.Timeout;
+    const scheduleNextMessage = () => {
+      const delay = 1400 + Math.random() * 1600; // between 1.4s and 3.0s
+      messageTimer = setTimeout(() => {
+        setCurrentMessageIndex((prev) => (prev + 1) % messageList.length);
+        if (isProcessing) {
+          scheduleNextMessage();
+        }
+      }, delay);
+    };
+    scheduleNextMessage();
+
+    return () => {
+      clearInterval(progressTimer);
+      clearTimeout(messageTimer);
+    };
+  }, [isProcessing, selectedType]);
+
   const filteredSamples = SAMPLE_REVIEWERS.filter((r) => r.reviewerType === selectedType);
 
   const startGeneration = async (file: File, keyToUse: string) => {
@@ -40,28 +106,63 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
         apiKey: keyToUse,
         reviewerType: selectedType,
       });
-      setIsProcessing(false);
-      onSelectReviewer(generated);
+      setProgressPercent(100);
+      setTimeout(() => {
+        setIsProcessing(false);
+        onSelectReviewer(generated);
+      }, 350);
     } catch (err: any) {
       setIsProcessing(false);
       setErrorMessage(err?.message || 'Failed to generate with Google AI.');
     }
   };
 
+  const handleProcessFile = (file: File) => {
+    if (isProcessing) return;
+    setErrorMessage(null);
+
+    // If no API key saved, prompt the user with modal
+    if (!apiKey || apiKey.trim().length === 0) {
+      setPendingFile(file);
+      setShowApiKeyModal(true);
+      return;
+    }
+
+    startGeneration(file, apiKey);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setErrorMessage(null);
-
-      // If no API key saved, prompt the user with modal
-      if (!apiKey || apiKey.trim().length === 0) {
-        setPendingFile(file);
-        setShowApiKeyModal(true);
-        return;
-      }
-
-      startGeneration(file, apiKey);
+      handleProcessFile(file);
     }
+    // reset input value so re-selecting same file works
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (isProcessing) return;
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      handleProcessFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!isProcessing) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
   };
 
   const handleSaveApiKeyAndProceed = () => {
@@ -98,9 +199,12 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
           fileName: file.name,
           reviewerType: selectedType,
         });
-      }, 350);
+      }, 400);
     }
   };
+
+  const activeMessages = selectedType === 'document' ? DOCUMENT_MESSAGES : QUIZ_MESSAGES;
+  const currentMessage = activeMessages[currentMessageIndex] || activeMessages[0];
 
   return (
     <div className="font-sans text-sm text-black dark:text-zinc-100 max-w-3xl space-y-6">
@@ -114,16 +218,18 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
             <div className="flex items-center gap-2 text-xs">
               <span className="text-emerald-500 font-medium">● Google AI Connected</span>
               <button
+                disabled={isProcessing}
                 onClick={() => setShowApiKeyModal(true)}
-                className="text-zinc-400 hover:text-black dark:hover:text-white underline"
+                className="text-zinc-400 hover:text-black dark:hover:text-white underline disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 (Change Key)
               </button>
             </div>
           ) : (
             <button
+              disabled={isProcessing}
               onClick={() => setShowApiKeyModal(true)}
-              className="text-xs text-zinc-400 hover:text-black dark:hover:text-white underline"
+              className="text-xs text-zinc-400 hover:text-black dark:hover:text-white underline disabled:opacity-40 disabled:cursor-not-allowed"
             >
               + Set Gemini API Key
             </button>
@@ -132,8 +238,10 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div
-            onClick={() => setSelectedType('document')}
-            className={`p-4 border rounded cursor-pointer transition-all ${
+            onClick={() => !isProcessing && setSelectedType('document')}
+            className={`p-4 border rounded transition-all ${
+              isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+            } ${
               selectedType === 'document'
                 ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900'
                 : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400'
@@ -150,8 +258,10 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
           </div>
 
           <div
-            onClick={() => setSelectedType('questionnaire')}
-            className={`p-4 border rounded cursor-pointer transition-all ${
+            onClick={() => !isProcessing && setSelectedType('questionnaire')}
+            className={`p-4 border rounded transition-all ${
+              isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+            } ${
               selectedType === 'questionnaire'
                 ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900'
                 : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400'
@@ -169,10 +279,21 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
         </div>
       </div>
 
-      {/* Upload Zone */}
-      <div className="py-5 border-y border-zinc-200 dark:border-zinc-800 space-y-3">
+      {/* Upload Zone & Drag & Drop Area */}
+      <div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        className={`py-6 px-5 border rounded-lg transition-all space-y-3 ${
+          isProcessing
+            ? 'opacity-60 bg-zinc-100 dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800 cursor-not-allowed pointer-events-none select-none'
+            : isDragOver
+            ? 'border-black dark:border-white bg-zinc-100 dark:bg-zinc-900 scale-[0.99]'
+            : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950'
+        }`}
+      >
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">
+          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
             Upload Document for {selectedType === 'document' ? 'Study Reviewer' : 'Questionnaire'}
           </h2>
           <span className="text-xs text-zinc-400">15MB limit</span>
@@ -181,27 +302,59 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
           Accepts .pdf, .docx, .txt, .md, .epub
         </p>
 
-        <div className="flex items-center gap-3 pt-1">
-          <label className="cursor-pointer inline-block py-2 px-4 bg-black text-white dark:bg-white dark:text-black rounded text-xs font-semibold hover:opacity-90 transition-opacity">
-            Drag & drop or select file
+        <div className="flex items-center gap-3 pt-2">
+          <label
+            className={`inline-flex items-center justify-center py-2 px-4 rounded text-xs font-semibold transition-all ${
+              isProcessing
+                ? 'bg-zinc-300 dark:bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                : 'cursor-pointer bg-black text-white dark:bg-white dark:text-black hover:opacity-90 active:scale-95'
+            }`}
+          >
+            {isProcessing ? 'Processing File...' : 'Drag & drop or select file'}
             <input
+              ref={fileInputRef}
               type="file"
+              disabled={isProcessing}
               className="hidden"
               accept=".pdf,.docx,.txt,.md,.epub,image/*"
               onChange={handleFileChange}
             />
           </label>
+          <span className="text-xs text-zinc-400 hidden sm:inline">
+            {isProcessing ? 'Upload disabled during generation' : 'Or drop anywhere inside this card'}
+          </span>
         </div>
       </div>
 
-      {/* Processing State */}
+      {/* Multi-Step Horizontal Progress Bar & Timed Status Messages */}
       {isProcessing && (
-        <div className="p-4 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center gap-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            Streaming directly to Google Gemini 3.5 Flash Lite... Parsing document and generating{' '}
-            {selectedType === 'document' ? 'Study Reviewer' : 'Questionnaire'}...
-          </p>
+        <div className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 space-y-3 transition-all">
+          {/* Header & Status Message */}
+          <div className="flex items-center justify-between text-xs gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2 h-2 rounded-full bg-black dark:bg-white animate-ping shrink-0" />
+              <p className="font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                {currentMessage}
+              </p>
+            </div>
+            <span className="font-mono text-zinc-500 font-semibold text-[11px] shrink-0">
+              {progressPercent}%
+            </span>
+          </div>
+
+          {/* Horizontal animated progress track */}
+          <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-zinc-900 dark:bg-zinc-100 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+
+          {/* Subtitle / model notice */}
+          <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-0.5">
+            <span>Synthesizing with Google Gemini 3.5 Flash Lite</span>
+            <span className="italic">Please do not close this tab</span>
+          </div>
         </div>
       )}
 
@@ -227,8 +380,12 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
           {filteredSamples.map((rev) => (
             <div
               key={rev.id}
-              onClick={() => onSelectReviewer(rev)}
-              className="cursor-pointer hover:underline text-xs text-zinc-800 dark:text-zinc-200 font-medium flex items-center justify-between p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent hover:border-zinc-200 dark:border-zinc-800"
+              onClick={() => !isProcessing && onSelectReviewer(rev)}
+              className={`text-xs text-zinc-800 dark:text-zinc-200 font-medium flex items-center justify-between p-2 rounded border border-transparent transition-colors ${
+                isProcessing
+                  ? 'opacity-40 cursor-not-allowed'
+                  : 'cursor-pointer hover:underline hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:border-zinc-200 dark:border-zinc-800'
+              }`}
             >
               <span>- {rev.title}</span>
               <span className="text-zinc-400 text-[11px]">({rev.fileName})</span>
