@@ -19,20 +19,20 @@ export const ReviewerStudio: React.FC<ReviewerStudioProps> = ({
   const isDocumentType = reviewer.reviewerType === 'document';
 
   return (
-    <div className="font-sans text-sm text-black dark:text-zinc-100 max-w-3xl space-y-6">
+    <div className="font-sans text-sm text-black dark:text-zinc-100 max-w-3xl mx-auto space-y-6">
       {/* Top Navigation & Type Badge */}
       <div className="flex flex-wrap items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800 text-xs gap-3">
         <div className="flex items-center gap-2">
           <button
             onClick={onBackToUpload}
-            className="hover:underline text-zinc-500 mr-2 font-medium"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-medium transition-colors"
           >
-            &lt; Back
+            ← Back to Documents
           </button>
-          <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+          <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate max-w-xs md:max-w-md">
             {reviewer.title}
           </span>
-          <span className="text-zinc-400 text-[11px]">({reviewer.fileName})</span>
+          <span className="text-zinc-400 text-[11px] hidden sm:inline">({reviewer.fileName})</span>
         </div>
 
         <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sidebar } from '../components/Sidebar';
+import { Navbar } from '../components/Navbar';
 import { UploadZone } from '../components/UploadZone';
 import { ReviewerStudio } from '../components/ReviewerStudio';
 import { PortfolioAbout } from '../components/PortfolioAbout';
@@ -41,10 +41,12 @@ export default function Home() {
     setSelectedReviewer(null);
   };
 
+  const isStudyingOrQuiz = activeTab === 'studio' && selectedReviewer !== null;
+
   return (
-    <div className="bg-white dark:bg-zinc-950 text-black dark:text-zinc-100 min-h-screen md:h-screen flex flex-col md:flex-row font-sans md:overflow-hidden selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors">
-      {/* Sidebar strictly following sketch layout */}
-      <Sidebar
+    <div className="bg-white dark:bg-zinc-950 text-black dark:text-zinc-100 min-h-screen flex flex-col font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors">
+      {/* Top Navbar */}
+      <Navbar
         activeTab={activeTab}
         setActiveTab={(tab) => {
           setActiveTab(tab);
@@ -53,10 +55,11 @@ export default function Home() {
         setUserQuote={setUserQuote}
         theme={theme}
         toggleTheme={toggleTheme}
+        isFocusedMode={isStudyingOrQuiz}
       />
 
-      {/* Main Right Workspace Area */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto h-full max-w-4xl mx-auto w-full">
+      {/* Main Workspace Area - full width, clean, uncluttered reading & quiz view */}
+      <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 overflow-y-auto">
         {activeTab === 'studio' && (
           <>
             {selectedReviewer ? (
