@@ -1,4 +1,5 @@
-import { ReviewerData, ReviewerType, QuestionnaireItem, MCQChoice } from '../types/reviewer';
+import { z } from 'zod';
+import { ReviewerData, ReviewerType, QuestionnaireItem, MCQChoice, MCQQuestion, IdentificationQuestion } from '../types/reviewer';
 
 export const DOCUMENT_STUDY_PROMPT = `You are an expert Document-to-Study-Reviewer generator.
 Strictly adhere to the following rules:
@@ -23,6 +24,55 @@ The testpaper must include:
    - Provide question, array of accepted answer strings in "answers", and a short "hint".
 3. Section headers to organize categories (type: "header" with "message").`;
 
+// Zod schemas defining questionnaire structure and validation
+export const MCQChoiceSchema = z.object({
+  choiceText: z.string().describe('Option text.'),
+  isCorrect: z.boolean().describe('Whether this option is the correct answer.'),
+});
+
+export const HeaderItemSchema = z.object({
+  type: z.literal('header'),
+  id: z.string().default(() => `h-${Date.now()}`),
+  message: z.string().describe('Section header title or message.'),
+});
+
+export const MCQItemSchema = z.object({
+  type: z.literal('mcq'),
+  id: z.string().default(() => `mcq-${Date.now()}`),
+  question: z.string().describe('Multiple-choice question body.'),
+  choices: z
+    .array(MCQChoiceSchema)
+    .min(2)
+    .describe('List of choices (typically 4 choices with one correct).'),
+  explanation: z.string().optional().default(''),
+});
+
+export const IdentificationItemSchema = z.object({
+  type: z.literal('identification'),
+  id: z.string().default(() => `id-${Date.now()}`),
+  question: z.string().describe('Identification question prompt.'),
+  answers: z
+    .array(z.string())
+    .min(1)
+    .describe('Accepted answer strings.'),
+  hint: z.string().optional().default(''),
+});
+
+export const QuestionnaireItemSchema = z.discriminatedUnion('type', [
+  HeaderItemSchema,
+  MCQItemSchema,
+  IdentificationItemSchema,
+]);
+
+export const QuestionnairePayloadSchema = z.object({
+  documentTitle: z.string().describe('The title of the document or lecture topic.'),
+  totalQuestions: z.number().int().optional(),
+  questionnaireItems: z.array(QuestionnaireItemSchema).default([]),
+});
+
+export type QuestionnairePayload = z.infer<typeof QuestionnairePayloadSchema>;
+
+// Gemini structured JSON response schema derived directly
 export const QUESTIONNAIRE_RESPONSE_SCHEMA = {
   type: 'object',
   properties: {
@@ -205,67 +255,112 @@ export async function generateReviewerWithGemini({
       cleanJson = cleanJson.replace(/^```\n?/, '').replace(/\n?```$/, '');
     }
 
-    const parsed = JSON.parse(cleanJson);
-    const rawItems: any[] = parsed.questionnaireItems || [];
+    const parsedJson = JSON.parse(cleanJson);
+    
+    // Safely parse and validate against Zod schema
+    const parseResult = QuestionnairePayloadSchema.safeParse(parsedJson);
 
-    // Sanitize and normalize items
-    const items: QuestionnaireItem[] = rawItems.map((item, idx) => {
-      const id = item.id || `item-${idx + 1}`;
-      if (item.type === 'header') {
+    let items: QuestionnaireItem[];
+    let resolvedTitle = cleanTitle;
+
+    if (parseResult.success) {
+      resolvedTitle = parseResult.data.documentTitle || cleanTitle;
+      items = parseResult.data.questionnaireItems.map((item, idx) => {
+        const id = item.id || `item-${idx + 1}`;
+        if (item.type === 'header') {
+          return {
+            type: 'header',
+            id,
+            message: item.message,
+          };
+        }
+        if (item.type === 'identification') {
+          return {
+            type: 'identification',
+            id,
+            question: item.question,
+            answers: item.answers,
+            hint: item.hint || '',
+          };
+        }
         return {
-          type: 'header',
+          type: 'mcq',
           id,
-          message: item.message || item.question || 'Category',
+          question: item.question,
+          choices: item.choices,
+          explanation: item.explanation || '',
         };
-      }
+      });
+    } else {
+      // Resilient fallback in case AI deviated slightly from structure
+      console.warn('Zod validation fallback triggered:', parseResult.error);
+      const rawItems: any[] = parsedJson?.questionnaireItems || [];
 
-      if (item.type === 'identification') {
+      items = rawItems.map((item, idx) => {
+        const id = item.id || `item-${idx + 1}`;
+        if (item.type === 'header') {
+          return {
+            type: 'header',
+            id,
+            message: item.message || item.question || 'Category',
+          };
+        }
+
+        if (item.type === 'identification') {
+          return {
+            type: 'identification',
+            id,
+            question: item.question || '',
+            answers: Array.isArray(item.answers) && item.answers.length > 0 ? item.answers : [item.answer || ''],
+            hint: item.hint || '',
+          };
+        }
+
+        let choices: MCQChoice[] = [];
+        if (Array.isArray(item.choices) && item.choices.length > 0) {
+          choices = item.choices.map((c: any) => ({
+            choiceText: typeof c === 'string' ? c : (c.choiceText || c.text || ''),
+            isCorrect: Boolean(c.isCorrect),
+          }));
+        } else if (Array.isArray(item.options)) {
+          choices = item.options.map((opt: any, optIdx: number) => ({
+            choiceText: typeof opt === 'string' ? opt : (opt.choiceText || opt.text || ''),
+            isCorrect: optIdx === 0,
+          }));
+        }
+
+        if (choices.length === 0) {
+          choices = [
+            { choiceText: 'True', isCorrect: true },
+            { choiceText: 'False', isCorrect: false },
+          ];
+        }
+
         return {
-          type: 'identification',
+          type: 'mcq',
           id,
           question: item.question || '',
-          answers: Array.isArray(item.answers) && item.answers.length > 0 ? item.answers : [item.answer || ''],
-          hint: item.hint || '',
+          choices,
+          explanation: item.explanation || '',
         };
+      });
+
+      if (parsedJson?.documentTitle) {
+        resolvedTitle = parsedJson.documentTitle;
       }
+    }
 
-      // Default or 'mcq': Ensure choices array is always populated
-      let choices: MCQChoice[] = [];
-      if (Array.isArray(item.choices) && item.choices.length > 0) {
-        choices = item.choices.map((c: any) => ({
-          choiceText: typeof c === 'string' ? c : (c.choiceText || c.text || ''),
-          isCorrect: Boolean(c.isCorrect),
-        }));
-      } else if (Array.isArray(item.options)) {
-        choices = item.options.map((opt: any, optIdx: number) => ({
-          choiceText: typeof opt === 'string' ? opt : (opt.choiceText || opt.text || ''),
-          isCorrect: optIdx === 0,
-        }));
-      }
+    const mcqs: MCQQuestion[] = items
+      .filter((i): i is { type: 'mcq' } & MCQQuestion => i.type === 'mcq')
+      .map(({ id, question, choices, explanation }) => ({ id, question, choices, explanation }));
 
-      // If no valid choices were returned, make fallback choices
-      if (choices.length === 0) {
-        choices = [
-          { choiceText: 'True', isCorrect: true },
-          { choiceText: 'False', isCorrect: false },
-        ];
-      }
-
-      return {
-        type: 'mcq',
-        id,
-        question: item.question || '',
-        choices,
-        explanation: item.explanation || '',
-      };
-    });
-
-    const mcqs = items.filter((i): i is { type: 'mcq' } & any => i.type === 'mcq');
-    const idents = items.filter((i): i is { type: 'identification' } & any => i.type === 'identification');
+    const idents: IdentificationQuestion[] = items
+      .filter((i): i is { type: 'identification' } & IdentificationQuestion => i.type === 'identification')
+      .map(({ id, question, answers, hint }) => ({ id, question, answers, hint }));
 
     return {
       id: `ai-quiz-${Date.now()}`,
-      title: parsed.documentTitle || cleanTitle,
+      title: resolvedTitle,
       docType: 'pdf',
       fileName: file.name,
       fileSize: fileSizeMB,
