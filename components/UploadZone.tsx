@@ -175,7 +175,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
           <h2 className="text-base font-semibold">
             Upload Document for {selectedType === 'document' ? 'Study Reviewer' : 'Questionnaire'}
           </h2>
-          <span className="text-xs text-zinc-400">25MB limit</span>
+          <span className="text-xs text-zinc-400">15MB limit</span>
         </div>
         <p className="text-xs text-zinc-500">
           Accepts .pdf, .docx, .txt, .md, .epub
