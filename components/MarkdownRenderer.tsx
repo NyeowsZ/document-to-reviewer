@@ -271,15 +271,41 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       if (currentListItems.length === 0) return;
       const listType = currentListItems[0].type;
       const items = currentListItems.map((item, i) => {
-        const colonIdx = item.text.indexOf(':');
-        if (colonIdx !== -1 && colonIdx < item.text.length - 1) {
-          const termPart = item.text.slice(0, colonIdx);
-          const descPart = item.text.slice(colonIdx + 1);
+        // Correctly handle both formats:
+        // 1) "**Term:** Description" (colon inside bold)
+        // 2) "**Term**: Description" (colon outside bold)
+        // 3) "Term: Description" (plain colon)
+        let termPart: string | null = null;
+        let descPart: string | null = null;
+
+        const matchInsideBold = item.text.match(/^(\*\*(?:\[\[.+?\]\]|.+?):\*\*)\s*(.*)/s);
+        const matchOutsideBold = item.text.match(/^(\*\*(?:\[\[.+?\]\]|.+?)\*\*):\s*(.*)/s);
+
+        if (matchInsideBold) {
+          termPart = matchInsideBold[1];
+          descPart = matchInsideBold[2];
+        } else if (matchOutsideBold) {
+          termPart = matchOutsideBold[1];
+          descPart = matchOutsideBold[2];
+        } else {
+          const colonIdx = item.text.indexOf(':');
+          if (colonIdx !== -1 && colonIdx < item.text.length - 1) {
+            termPart = item.text.slice(0, colonIdx);
+            descPart = item.text.slice(colonIdx + 1);
+          }
+        }
+
+        if (termPart !== null && descPart !== null) {
+          // Normalize colon display so it's clean and never duplicated
+          let cleanTerm = termPart.trim();
+          if (cleanTerm.endsWith(':**')) {
+            cleanTerm = cleanTerm.slice(0, -3) + '**';
+          }
 
           return (
             <li key={i} className="leading-relaxed my-1">
-              <span className="font-semibold">{parseInline(termPart, true)}:</span>{' '}
-              <span className="leading-relaxed">{parseInline(descPart, false)}</span>
+              <span className="font-semibold">{parseInline(cleanTerm, true)}:</span>{' '}
+              <span className="leading-relaxed">{parseInline(descPart.trim(), false)}</span>
             </li>
           );
         }
