@@ -120,17 +120,17 @@ export default function Home() {
 
         {activeTab === 'library' && (
           <div className="space-y-6 max-w-3xl">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800 gap-3">
+            <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800 gap-3">
               <div>
-                <h1 className="font-bold text-base tracking-tight">Saved Library</h1>
-                <p className="text-xs text-zinc-500 mt-0.5">
+                <h1 className="font-bold text-lg tracking-tight">Saved Library</h1>
+                <p className="text-sm text-zinc-500 mt-0.5">
                   Saved study documents & questionnaires in your browser.
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2.5 shrink-0">
                 <button
                   onClick={handleResetSampleData}
-                  className="px-2.5 py-1.5 text-xs rounded border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors"
+                  className="px-3 py-1.5 text-sm rounded border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors"
                   title="Restore default sample materials"
                 >
                   Reset Defaults
@@ -140,7 +140,7 @@ export default function Home() {
                     setSelectedReviewer(null);
                     setActiveTab('studio');
                   }}
-                  className="px-3 py-1.5 text-xs font-semibold rounded bg-black text-white dark:bg-white dark:text-black transition-opacity hover:opacity-90"
+                  className="px-3.5 py-1.5 text-sm font-semibold rounded bg-black text-white dark:bg-white dark:text-black transition-opacity hover:opacity-90"
                 >
                   + Create Reviewer
                 </button>
@@ -149,20 +149,20 @@ export default function Home() {
 
             {savedReviewers.length === 0 ? (
               <div className="py-12 text-center border border-dashed border-zinc-300 dark:border-zinc-800 rounded-lg">
-                <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Your library is empty</p>
-                <p className="text-xs text-zinc-400 mt-1">Generate or upload documents in the Studio to save them here.</p>
+                <p className="text-base font-medium text-zinc-600 dark:text-zinc-400">Your library is empty</p>
+                <p className="text-sm text-zinc-400 mt-1">Generate or upload documents in the Studio to save them here.</p>
                 <button
                   onClick={() => {
                     setSelectedReviewer(null);
                     setActiveTab('studio');
                   }}
-                  className="mt-4 px-3 py-1.5 text-xs font-semibold rounded bg-black text-white dark:bg-white dark:text-black"
+                  className="mt-4 px-3.5 py-2 text-sm font-semibold rounded bg-black text-white dark:bg-white dark:text-black"
                 >
                   Go to Studio
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 {savedReviewers.map((rev) => {
                   const isDoc = rev.reviewerType === 'document';
                   const questionCount = (rev.mcqQuestions?.length || 0) + (rev.identificationQuestions?.length || 0);
@@ -174,17 +174,17 @@ export default function Home() {
                         setSelectedReviewer(rev);
                         setActiveTab('studio');
                       }}
-                      className="p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg cursor-pointer hover:border-black dark:hover:border-white transition-colors space-y-1.5 bg-white dark:bg-zinc-950 group relative"
+                      className="p-5 border border-zinc-200 dark:border-zinc-800 rounded-lg cursor-pointer hover:border-black dark:hover:border-white transition-colors space-y-2 bg-white dark:bg-zinc-950 group relative"
                     >
                       <div className="flex items-center justify-between text-xs text-zinc-500">
-                        <span className="font-semibold uppercase font-mono text-[11px] text-zinc-600 dark:text-zinc-400">
+                        <span className="font-semibold uppercase font-mono text-xs text-zinc-600 dark:text-zinc-400">
                           [{rev.docType}] • {isDoc ? 'DOCUMENT REVIEWER' : 'QUESTIONNAIRE'}
                         </span>
                         <div className="flex items-center gap-3">
-                          <span>{rev.uploadDate}</span>
+                          <span className="text-xs">{rev.uploadDate}</span>
                           <button
                             onClick={(e) => handleDeleteReviewer(rev.id, e)}
-                            className="text-zinc-400 hover:text-red-500 text-xs px-1 py-0.5 rounded transition-colors"
+                            className="text-zinc-400 hover:text-red-500 text-sm px-1.5 py-0.5 rounded transition-colors"
                             title="Remove from saved library"
                           >
                             ✕
@@ -192,18 +192,18 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-black dark:group-hover:text-white transition-colors">
+                      <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 group-hover:text-black dark:group-hover:text-white transition-colors">
                         {rev.title}
                       </h3>
-                      <p className="text-xs text-zinc-500">{rev.fileName} ({rev.fileSize})</p>
+                      <p className="text-sm text-zinc-500">{rev.fileName} ({rev.fileSize})</p>
 
-                      <div className="flex items-center justify-between pt-1.5 text-xs text-zinc-400">
+                      <div className="flex items-center justify-between pt-2 text-sm text-zinc-400">
                         <span>
                           {isDoc
                             ? 'Active Recall Study Mode (Blurred & Textboxes)'
                             : `Questionnaire: ${questionCount} Interactive Questions`}
                         </span>
-                        <span className="text-[11px] font-mono text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200">
+                        <span className="text-xs font-mono text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200">
                           Open →
                         </span>
                       </div>
