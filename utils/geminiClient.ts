@@ -16,13 +16,25 @@ Return ONLY valid Markdown. Do not include markdown code block ticks (\`\`\`mark
 
 export const QUESTIONNAIRE_PROMPT = `You are an expert Document-to-Questionnaire generator.
 Generate a comprehensive, high-quality testpaper from the provided document.
-The testpaper must include:
-1. Part I: Multiple Choice Questions. For each MCQ question:
-   - Provide exactly 4 choices in the "choices" array.
-   - Exactly one choice MUST have isCorrect: true, the other three MUST have isCorrect: false.
-2. Part II: Identification Questions. For each identification question:
-   - Provide question, array of accepted answer strings in "answers", and a short "hint".
-3. Section headers to organize categories (type: "header" with "message").`;
+
+CRITICAL RULES:
+1. Part I: Multiple Choice Questions (type: "mcq"):
+   - Every MCQ MUST have EXACTLY 4 plausible choices in the "choices" array:
+     [
+       { "choiceText": "Correct fact from doc", "isCorrect": true },
+       { "choiceText": "Plausible distractor 1", "isCorrect": false },
+       { "choiceText": "Plausible distractor 2", "isCorrect": false },
+       { "choiceText": "Plausible distractor 3", "isCorrect": false }
+     ]
+   - NEVER generate "True" or "False" choices. Every choice MUST be substantive text describing concepts, terms, definitions, numbers, or dates from the document.
+   - EXACTLY ONE choice must have "isCorrect": true, and the other THREE must have "isCorrect": false.
+   - Include a concise "explanation" justifying the correct answer.
+
+2. Part II: Identification Questions (type: "identification"):
+   - Provide "question", an array of accepted exact and variant answers in "answers", and a helpful "hint".
+
+3. Section Headers (type: "header"):
+   - Organize groups of questions with headers using "message" (e.g., "Key Concepts", "Historical Milestones", "Applications").`;
 
 // Zod schemas defining questionnaire structure and validation
 export const MCQChoiceSchema = z.object({
@@ -39,21 +51,34 @@ export const HeaderItemSchema = z.object({
 export const MCQItemSchema = z.object({
   type: z.literal('mcq'),
   id: z.string().default(() => `mcq-${Date.now()}`),
-  question: z.string().describe('Multiple-choice question body.'),
+  question: z
+    .string()
+    .min(5, 'Question text must not be empty')
+    .describe('Multiple-choice question body.'),
   choices: z
-    .array(MCQChoiceSchema)
+    .array(
+      z.union([
+        MCQChoiceSchema,
+        z.string().transform((str) => ({
+          choiceText: str,
+          isCorrect: false,
+        })),
+      ])
+    )
     .min(2)
-    .describe('List of choices (typically 4 choices with one correct).'),
+    .describe('List of choices (4 choices with one correct).'),
   explanation: z.string().optional().default(''),
 });
 
 export const IdentificationItemSchema = z.object({
   type: z.literal('identification'),
   id: z.string().default(() => `id-${Date.now()}`),
-  question: z.string().describe('Identification question prompt.'),
+  question: z
+    .string()
+    .min(5, 'Question text must not be empty')
+    .describe('Identification question prompt.'),
   answers: z
-    .array(z.string())
-    .min(1)
+    .union([z.array(z.string()), z.string().transform((val) => [val])])
     .describe('Accepted answer strings.'),
   hint: z.string().optional().default(''),
 });
@@ -141,7 +166,7 @@ export const QUESTIONNAIRE_RESPONSE_SCHEMA = {
             description: 'Helpful hint for identification question.',
           },
         },
-        required: ['type', 'id'],
+        required: ['type', 'id', 'question'],
       },
     },
   },
@@ -179,11 +204,14 @@ export async function generateReviewerWithGemini({
   const userInstruction =
     reviewerType === 'document'
       ? 'Convert the attached document into a structured Study Reviewer following the active recall format with [[Term]] brackets.'
-      : 'Generate an interactive questionnaire testpaper with Multiple Choice and Identification questions from the attached document adhering strictly to the JSON response schema. For each MCQ item, ensure choices array is present with 4 options.';
+      : 'Generate a comprehensive, high-quality testpaper from the attached document. Include Part I (Multiple Choice Questions with exactly 4 conceptual options: 1 correct, 3 distractors — NO True/False) and Part II (Identification questions with answers and hints). Adhere strictly to the JSON response schema.';
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
 
   const payload: any = {
+    system_instruction: {
+      parts: [{ text: systemPrompt }],
+    },
     contents: [
       {
         parts: [
@@ -194,13 +222,14 @@ export async function generateReviewerWithGemini({
             },
           },
           {
-            text: `${systemPrompt}\n\nTask: ${userInstruction}`,
+            text: `Task: ${userInstruction}`,
           },
         ],
       },
     ],
     generationConfig: {
-      temperature: 0.4,
+      temperature: 0.2,
+      maxOutputTokens: 8192,
     },
   };
 
@@ -260,10 +289,10 @@ export async function generateReviewerWithGemini({
     // Safely parse and validate against Zod schema
     const parseResult = QuestionnairePayloadSchema.safeParse(parsedJson);
 
-    let items: QuestionnaireItem[];
+    let items: QuestionnaireItem[] = [];
     let resolvedTitle = cleanTitle;
 
-    if (parseResult.success) {
+    if (parseResult.success && parseResult.data.questionnaireItems.length > 0) {
       resolvedTitle = parseResult.data.documentTitle || cleanTitle;
       items = parseResult.data.questionnaireItems.map((item, idx) => {
         const id = item.id || `item-${idx + 1}`;
@@ -283,11 +312,30 @@ export async function generateReviewerWithGemini({
             hint: item.hint || '',
           };
         }
+
+        // Validate that at least one choice is correct
+        let normalizedChoices: MCQChoice[] = item.choices.map((c, cIdx) => ({
+          choiceText: c.choiceText,
+          isCorrect: c.isCorrect,
+        }));
+
+        if (!normalizedChoices.some((c) => c.isCorrect) && normalizedChoices.length > 0) {
+          normalizedChoices[0].isCorrect = true;
+        }
+
+        // Clean question text and truncate repetitive degeneration
+        let cleanQuestion = (item.question || '').trim();
+        cleanQuestion = cleanQuestion.replace(/(\b\w+\b[\s,]+){4,}(?=\1)/gi, '');
+        if (cleanQuestion.length > 300) {
+          const sentences = cleanQuestion.split(/(?<=[.?!])\s+/);
+          cleanQuestion = sentences.slice(0, 2).join(' ');
+        }
+
         return {
           type: 'mcq',
           id,
-          question: item.question,
-          choices: item.choices,
+          question: cleanQuestion,
+          choices: normalizedChoices,
           explanation: item.explanation || '',
         };
       });
@@ -298,7 +346,7 @@ export async function generateReviewerWithGemini({
 
       items = rawItems.map((item, idx) => {
         const id = item.id || `item-${idx + 1}`;
-        if (item.type === 'header') {
+        if (item.type === 'header' || (!item.question && item.message)) {
           return {
             type: 'header',
             id,
@@ -316,30 +364,49 @@ export async function generateReviewerWithGemini({
           };
         }
 
+        // Parse choices/options flexibly
         let choices: MCQChoice[] = [];
         if (Array.isArray(item.choices) && item.choices.length > 0) {
           choices = item.choices.map((c: any) => ({
-            choiceText: typeof c === 'string' ? c : (c.choiceText || c.text || ''),
+            choiceText: typeof c === 'string' ? c : (c.choiceText || c.text || c.label || ''),
             isCorrect: Boolean(c.isCorrect),
           }));
-        } else if (Array.isArray(item.options)) {
+        } else if (Array.isArray(item.options) && item.options.length > 0) {
           choices = item.options.map((opt: any, optIdx: number) => ({
-            choiceText: typeof opt === 'string' ? opt : (opt.choiceText || opt.text || ''),
+            choiceText: typeof opt === 'string' ? opt : (opt.choiceText || opt.text || opt.label || ''),
             isCorrect: optIdx === 0,
           }));
         }
 
+        // If it was marked as mcq but has no choices, convert to identification question instead of fake True/False!
         if (choices.length === 0) {
-          choices = [
-            { choiceText: 'True', isCorrect: true },
-            { choiceText: 'False', isCorrect: false },
-          ];
+          return {
+            type: 'identification',
+            id,
+            question: item.question || 'Question',
+            answers: Array.isArray(item.answers) && item.answers.length > 0 ? item.answers : [item.answer || 'Answer'],
+            hint: item.hint || item.explanation || '',
+          };
+        }
+
+        // Ensure at least one choice is marked correct
+        if (!choices.some((c) => c.isCorrect)) {
+          choices[0].isCorrect = true;
+        }
+
+        // Clean question text and truncate repetitive degeneration
+        let cleanQuestion = (item.question || '').trim();
+        // Detect repetitive word loops (e.g. "properly now nicely right here...")
+        cleanQuestion = cleanQuestion.replace(/(\b\w+\b[\s,]+){4,}(?=\1)/gi, '');
+        if (cleanQuestion.length > 300) {
+          const sentences = cleanQuestion.split(/(?<=[.?!])\s+/);
+          cleanQuestion = sentences.slice(0, 2).join(' ');
         }
 
         return {
           type: 'mcq',
           id,
-          question: item.question || '',
+          question: cleanQuestion || 'Question:',
           choices,
           explanation: item.explanation || '',
         };
@@ -349,6 +416,12 @@ export async function generateReviewerWithGemini({
         resolvedTitle = parsedJson.documentTitle;
       }
     }
+
+    // Filter out invalid items (e.g. empty or questionless items)
+    items = items.filter((item) => {
+      if (item.type === 'header') return Boolean(item.message?.trim());
+      return Boolean(item.question && item.question.trim().length > 0);
+    });
 
     const mcqs: MCQQuestion[] = items
       .filter((i): i is { type: 'mcq' } & MCQQuestion => i.type === 'mcq')

@@ -202,7 +202,7 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
                     className="space-y-1.5 scroll-mt-24"
                   >
                     <p className="font-normal text-zinc-900 dark:text-zinc-100">
-                      <span className="font-semibold">{questionNumber}.</span> {item.question}
+                      <span className="font-semibold">{questionNumber}.</span> {item.question || 'Select the most appropriate option based on the document:'}
                     </p>
 
                     <div className="pl-4 space-y-1">
@@ -285,7 +285,7 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
                     className="space-y-1.5 scroll-mt-24"
                   >
                     <p className="font-normal text-zinc-900 dark:text-zinc-100">
-                      <span className="font-semibold">{questionNumber}.</span> {item.question}
+                      <span className="font-semibold">{questionNumber}.</span> {item.question || 'Identify the term or concept described:'}
                     </p>
 
                     <div className="pl-4 flex items-center gap-3">
