@@ -197,6 +197,75 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     let inCodeBlock = false;
     let codeBuffer: string[] = [];
     let currentListItems: { type: 'ul' | 'ol'; text: string }[] = [];
+    let currentTableRows: string[] = [];
+
+    const flushTable = (key: number) => {
+      if (currentTableRows.length === 0) return;
+
+      const parseRowCells = (row: string) => {
+        let trimmed = row.trim();
+        if (trimmed.startsWith('|')) trimmed = trimmed.slice(1);
+        if (trimmed.endsWith('|')) trimmed = trimmed.slice(0, -1);
+        return trimmed.split('|').map((c) => c.trim());
+      };
+
+      const isDelimiter = (row: string) => {
+        const cells = parseRowCells(row);
+        return cells.length > 0 && cells.every((c) => /^:?-+:?$/.test(c));
+      };
+
+      const rows = currentTableRows;
+      currentTableRows = [];
+
+      if (rows.length === 0) return;
+
+      let headerCells: string[] = [];
+      let alignClasses: string[] = [];
+      let bodyRows: string[][] = [];
+
+      if (rows.length >= 2 && isDelimiter(rows[1])) {
+        headerCells = parseRowCells(rows[0]);
+        alignClasses = parseRowCells(rows[1]).map((cell) => {
+          const starts = cell.startsWith(':');
+          const ends = cell.endsWith(':');
+          if (starts && ends) return 'text-center';
+          if (ends) return 'text-right';
+          return 'text-left';
+        });
+        bodyRows = rows.slice(2).map(parseRowCells);
+      } else {
+        bodyRows = rows.map(parseRowCells);
+      }
+
+      elements.push(
+        <div key={`table-${key}`} className="my-4 overflow-x-auto rounded border border-zinc-200 dark:border-zinc-800">
+          <table className="w-full text-left text-sm border-collapse">
+            {headerCells.length > 0 && (
+              <thead className="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold">
+                <tr>
+                  {headerCells.map((h, i) => (
+                    <th key={i} className={`p-3 font-semibold ${alignClasses[i] || 'text-left'}`}>
+                      {parseInline(h, false)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 text-zinc-800 dark:text-zinc-200">
+              {bodyRows.map((r, rIdx) => (
+                <tr key={rIdx} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors">
+                  {r.map((c, cIdx) => (
+                    <td key={cIdx} className={`p-3 ${alignClasses[cIdx] || 'text-left'}`}>
+                      {parseInline(c, false)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    };
 
     const flushList = (key: number) => {
       if (currentListItems.length === 0) return;
@@ -239,7 +308,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     };
 
     lines.forEach((line, index) => {
-      if (line.trim().startsWith('```')) {
+      const trimmed = line.trim();
+
+      if (trimmed.startsWith('```')) {
         if (inCodeBlock) {
           elements.push(
             <pre
@@ -253,6 +324,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           inCodeBlock = false;
         } else {
           flushList(index);
+          flushTable(index);
           inCodeBlock = true;
         }
         return;
@@ -263,7 +335,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         return;
       }
 
-      const trimmed = line.trim();
+      // Check if this line is a table row (starts and ends with pipe |)
+      if (trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.length > 1) {
+        flushList(index);
+        currentTableRows.push(trimmed);
+        return;
+      } else {
+        flushTable(index);
+      }
+
       if (!trimmed) {
         flushList(index);
         return;
@@ -305,6 +385,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     });
 
     flushList(lines.length);
+    flushTable(lines.length);
     return elements;
   };
 
