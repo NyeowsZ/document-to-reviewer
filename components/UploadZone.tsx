@@ -210,17 +210,17 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
     <div className="font-sans text-base text-black dark:text-zinc-100 max-w-3xl space-y-6">
       {/* Target Mode Selector: Document Reviewer vs Questionnaire */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-zinc-400">
             Select Output Mode:
           </p>
           {apiKey ? (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-emerald-500 font-medium">● Google AI Connected</span>
+            <div className="flex items-center gap-2 text-xs sm:text-sm">
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">Connected to Google AI</span>
               <button
                 disabled={isProcessing}
                 onClick={() => setShowApiKeyModal(true)}
-                className="text-zinc-400 hover:text-black dark:hover:text-white underline disabled:opacity-40 disabled:cursor-not-allowed text-xs"
+                className="text-zinc-500 hover:text-black dark:hover:text-white underline disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 (Change Key)
               </button>
@@ -229,50 +229,60 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
             <button
               disabled={isProcessing}
               onClick={() => setShowApiKeyModal(true)}
-              className="text-sm text-zinc-400 hover:text-black dark:hover:text-white underline disabled:opacity-40 disabled:cursor-not-allowed"
+              className="text-xs sm:text-sm text-zinc-500 hover:text-black dark:hover:text-white underline disabled:opacity-40 disabled:cursor-not-allowed self-start"
             >
-              + Set Gemini API Key
+              [Set Gemini API Key]
             </button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div
             onClick={() => !isProcessing && setSelectedType('document')}
-            className={`p-4 border rounded-lg transition-all ${
+            className={`p-3.5 sm:p-4 border rounded-lg transition-all ${
               isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             } ${
               selectedType === 'document'
-                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900'
+                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-1 ring-black dark:ring-white'
                 : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400'
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+              <span className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
                 Make Study Document
               </span>
+              {selectedType === 'document' && (
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-black dark:text-white">
+                  [Selected]
+                </span>
+              )}
             </div>
-            <p className="text-sm text-zinc-500 mt-1.5 leading-relaxed">
+            <p className="text-xs sm:text-sm text-zinc-500 mt-1.5 leading-relaxed">
               Generates a structured study document supporting active recall blurring and section hierarchy collapsing.
             </p>
           </div>
 
           <div
             onClick={() => !isProcessing && setSelectedType('questionnaire')}
-            className={`p-4 border rounded-lg transition-all ${
+            className={`p-3.5 sm:p-4 border rounded-lg transition-all ${
               isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             } ${
               selectedType === 'questionnaire'
-                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900'
+                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-1 ring-black dark:ring-white'
                 : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400'
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+              <span className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
                 Make Questionnaire / Quiz
               </span>
+              {selectedType === 'questionnaire' && (
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-black dark:text-white">
+                  [Selected]
+                </span>
+              )}
             </div>
-            <p className="text-sm text-zinc-500 mt-1.5 leading-relaxed">
+            <p className="text-xs sm:text-sm text-zinc-500 mt-1.5 leading-relaxed">
               Generates a self-check quiz with Multiple Choice (bold/red feedback) and Identification question sets.
             </p>
           </div>
@@ -284,7 +294,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        className={`py-7 px-6 border rounded-lg transition-all space-y-3.5 ${
+        className={`py-5 px-4 sm:py-7 sm:px-6 border rounded-lg transition-all space-y-3 ${
           isProcessing
             ? 'opacity-60 bg-zinc-100 dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800 cursor-not-allowed pointer-events-none select-none'
             : isDragOver
@@ -292,25 +302,25 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
             : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950'
         }`}
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <h2 className="text-sm sm:text-base font-semibold text-zinc-900 dark:text-zinc-100">
             Upload Document for {selectedType === 'document' ? 'Study Reviewer' : 'Questionnaire'}
           </h2>
-          <span className="text-xs text-zinc-400">15MB limit</span>
+          <span className="text-xs text-zinc-400">15MB max</span>
         </div>
-        <p className="text-sm text-zinc-500">
-          Accepts .pdf, .docx, .txt, .md, .epub
+        <p className="text-xs sm:text-sm text-zinc-500">
+          Accepts PDF, DOCX, TXT, MD, EPUB
         </p>
 
-        <div className="flex items-center gap-3.5 pt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 pt-1">
           <label
-            className={`inline-flex items-center justify-center py-2.5 px-5 rounded-md text-sm font-semibold transition-all ${
+            className={`inline-flex items-center justify-center py-2.5 px-4 rounded text-xs sm:text-sm font-semibold transition-all ${
               isProcessing
                 ? 'bg-zinc-300 dark:bg-zinc-800 text-zinc-500 cursor-not-allowed'
                 : 'cursor-pointer bg-black text-white dark:bg-white dark:text-black hover:opacity-90 active:scale-95'
             }`}
           >
-            {isProcessing ? 'Processing File...' : 'Drag & drop or select file'}
+            {isProcessing ? 'Processing File...' : 'Select File or Drag Here'}
             <input
               ref={fileInputRef}
               type="file"
@@ -320,19 +330,19 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
               onChange={handleFileChange}
             />
           </label>
-          <span className="text-sm text-zinc-400 hidden sm:inline">
-            {isProcessing ? 'Upload disabled during generation' : 'Or drop anywhere inside this card'}
+          <span className="text-xs text-zinc-400">
+            {isProcessing ? 'Upload disabled during generation' : 'Or drop file anywhere inside this box'}
           </span>
         </div>
       </div>
 
       {/* Multi-Step Horizontal Progress Bar & Timed Status Messages */}
       {isProcessing && (
-        <div className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 space-y-3 transition-all">
+        <div className="p-3.5 sm:p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 space-y-2.5 transition-all">
           {/* Header & Status Message */}
-          <div className="flex items-center justify-between text-sm gap-3">
+          <div className="flex items-center justify-between text-xs sm:text-sm gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="w-2.5 h-2.5 rounded-full bg-black dark:bg-white animate-ping shrink-0" />
+              <span className="w-2 h-2 rounded-full bg-black dark:bg-white animate-pulse shrink-0" />
               <p className="font-medium text-zinc-800 dark:text-zinc-200 truncate">
                 {currentMessage}
               </p>
@@ -351,7 +361,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
           </div>
 
           {/* Subtitle / model notice */}
-          <div className="flex items-center justify-between text-xs text-zinc-400 pt-0.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-zinc-400 pt-0.5 gap-1">
             <span>Synthesizing with Google Gemini 3.5 Flash Lite</span>
             <span className="italic">Please do not close this tab</span>
           </div>
@@ -360,13 +370,13 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onSelectReviewer }) => {
 
       {/* Error Banner */}
       {errorMessage && (
-        <div className="p-3.5 text-sm rounded bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 flex items-center justify-between">
+        <div className="p-3 text-xs sm:text-sm rounded bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 flex items-center justify-between">
           <span>{errorMessage}</span>
           <button
             onClick={() => setErrorMessage(null)}
-            className="hover:underline font-bold ml-2 shrink-0"
+            className="hover:underline font-bold ml-2 shrink-0 text-xs"
           >
-            ✕
+            [Close]
           </button>
         </div>
       )}

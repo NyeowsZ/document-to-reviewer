@@ -120,48 +120,52 @@ export const QuizModule: React.FC<QuizModuleProps> = ({
   return (
     <div className="font-sans text-base text-black dark:text-zinc-100 max-w-3xl space-y-6">
       {/* Top Header Bar & Explicit Part Anchors */}
-      <div className="sticky top-0 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800 pb-3 pt-1 z-10 space-y-2">
-        <div className="flex flex-wrap items-center justify-between text-xs gap-2">
-          <div className="flex items-center gap-2 font-medium">
-            <span className="font-bold text-zinc-900 dark:text-zinc-100">Questionnaire Testpaper</span>
-            <span className="text-zinc-400">({totalQuestionCount} Questions)</span>
+      <div className="sticky top-0 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 z-10 space-y-3 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm gap-2">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-zinc-900 dark:text-zinc-100 text-sm sm:text-base">
+              Questionnaire
+            </span>
+            <span className="text-zinc-500 font-mono text-xs">
+              ({totalQuestionCount} Questions)
+            </span>
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-2 self-start sm:self-center">
             {hasMcqQuestions && (
               <button
                 onClick={handleShuffleChoices}
-                className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white font-medium hover:underline"
+                className="px-2.5 py-1 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-semibold"
               >
-                [Shuffle Choices]
+                Shuffle Choices
               </button>
             )}
             <button
               onClick={handleResetQuiz}
-              className="text-zinc-500 hover:text-black dark:hover:text-white hover:underline"
+              className="px-2.5 py-1 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-semibold"
             >
-              [Reset All]
+              Reset Answers
             </button>
           </div>
         </div>
 
         {/* Clear Type Part Anchors */}
-        <div className="flex items-center gap-2 overflow-x-auto py-1 text-xs no-scrollbar">
-          <span className="text-zinc-400 text-[11px] font-mono mr-1 shrink-0">Jump to Section:</span>
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-zinc-100 dark:border-zinc-900 text-xs">
+          <span className="text-zinc-500 font-medium mr-1">Section Jump:</span>
           {hasMcqQuestions && (
             <button
               onClick={() => scrollToAnchor('sec-part-mcq')}
-              className="px-2.5 py-1 rounded text-xs font-semibold bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors shrink-0 border border-zinc-200 dark:border-zinc-800"
+              className="px-2.5 py-1 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors border border-zinc-200 dark:border-zinc-800"
             >
-              Part I: Multiple Choice
+              Part 1: Multiple Choice
             </button>
           )}
           {hasIdentQuestions && (
             <button
               onClick={() => scrollToAnchor('sec-part-ident')}
-              className="px-2.5 py-1 rounded text-xs font-semibold bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors shrink-0 border border-zinc-200 dark:border-zinc-800"
+              className="px-2.5 py-1 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors border border-zinc-200 dark:border-zinc-800"
             >
-              Part II: Identification
+              Part 2: Identification
             </button>
           )}
         </div>

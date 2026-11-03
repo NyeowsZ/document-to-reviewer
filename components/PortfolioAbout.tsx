@@ -13,7 +13,7 @@ export const PortfolioAbout: React.FC = () => {
       <div className="space-y-3">
         <h2 className="font-bold text-sm">System Pipeline:</h2>
         <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
-          1. Document Parsing (PDF / DOCX / TXT) ➔ 2. Cleaned Study Reviewer Generation (1:1 copy with preserved spacing) ➔ 3. Automated MCQ & Identification Quiz Generation ➔ 4. Minimalist Self-Study Interface.
+          1. Document Parsing (PDF / DOCX / TXT) --&gt; 2. Cleaned Study Reviewer Generation (1:1 copy with preserved spacing) --&gt; 3. Automated MCQ &amp; Identification Quiz Generation --&gt; 4. Minimalist Self-Study Interface.
         </p>
       </div>
     </div>

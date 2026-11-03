@@ -437,7 +437,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     return (
       <div key={node.id} data-section-id={node.id} className="space-y-2">
         {node.title && (
-          <div className="flex items-center justify-between mt-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mt-4 pt-1 border-t border-zinc-100 dark:border-zinc-900 first:border-t-0">
             {React.createElement(
               `h${Math.min(node.level, 6)}`,
               { className: getHeadingClass(node.level) },
@@ -446,9 +446,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
             <button
               onClick={() => toggleSection(node.id)}
-              className="text-xs text-zinc-500 hover:text-black dark:hover:text-white font-mono ml-4 shrink-0"
+              className="text-xs px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white bg-zinc-50 dark:bg-zinc-900 font-mono self-start sm:self-center shrink-0"
             >
-              {isHidden ? '[show children]' : '[hide children]'}
+              {isHidden ? 'Show Content' : 'Hide Content'}
             </button>
           </div>
         )}
@@ -463,11 +463,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         {isHidden && (
           <div
             onClick={() => toggleSection(node.id)}
-            className="py-2 cursor-pointer group space-y-1 my-1"
+            className="p-2.5 rounded bg-zinc-50 dark:bg-zinc-900/60 border border-dashed border-zinc-300 dark:border-zinc-700 cursor-pointer text-xs text-zinc-500 hover:text-black dark:hover:text-white flex items-center justify-between"
             title="Section hidden - Click to reveal"
           >
-            <div className="border-b border-zinc-300 dark:border-zinc-700 group-hover:border-zinc-500 transition-colors" />
-            <div className="border-b border-zinc-300 dark:border-zinc-700 group-hover:border-zinc-500 transition-colors" />
+            <span>Section hidden (collapsed)</span>
+            <span className="font-semibold underline">Click to expand</span>
           </div>
         )}
       </div>
@@ -476,20 +476,28 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   return (
     <div className="font-sans text-base text-black dark:text-zinc-100 space-y-5">
-      <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800 text-xs">
-        <span className="text-zinc-500 font-medium">Dynamic Document Tree Hierarchy</span>
-        <div className="flex gap-3">
+      {/* Document Section Controls Header Bar */}
+      <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+        <div>
+          <span className="text-zinc-900 dark:text-zinc-100 font-bold block sm:inline mr-2">
+            Document Structure
+          </span>
+          <span className="text-zinc-500 text-[11px]">
+            Collapse sections for focused topic revision
+          </span>
+        </div>
+        <div className="flex items-center gap-2 self-start sm:self-center">
           <button
             onClick={hideAllSections}
-            className="text-zinc-500 hover:text-black dark:hover:text-white hover:underline"
+            className="px-2.5 py-1 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-medium"
           >
-            [Hide All Children]
+            Collapse All
           </button>
           <button
             onClick={showAllSections}
-            className="text-zinc-500 hover:text-black dark:hover:text-white hover:underline"
+            className="px-2.5 py-1 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-medium"
           >
-            [Show All Children]
+            Expand All
           </button>
         </div>
       </div>
